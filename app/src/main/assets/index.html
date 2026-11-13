@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="theme-color" content="#211b4d"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Atrisa World"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon.svg"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Atrisa's World 3D</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap');
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none;touch-action:pan-x pan-y;font-family:Vazirmatn,system-ui;background:#171c46;color:#fff}
+#game{position:fixed;inset:0;touch-action:none}canvas{display:block;touch-action:none}
+#hud{position:fixed;inset:0;pointer-events:none}
+.top{display:flex;justify-content:space-between;align-items:flex-start;padding:14px;gap:8px}
+.brand,.stats,.hint,.quest{background:#211b4dcc;border:1px solid #ffffff45;backdrop-filter:blur(12px);box-shadow:0 8px 28px #100d3355;border-radius:18px;padding:9px 14px}
+.brand{font-weight:800;color:#ffc9ed;font-size:clamp(15px,3vw,22px)}
+.stats{display:flex;gap:12px;font-weight:700;flex-wrap:wrap}
+.quest{position:absolute;top:78px;left:14px;max-width:260px;line-height:1.8;font-size:13px}\n.managerbar{position:absolute;top:145px;left:14px;display:flex;gap:7px;pointer-events:auto}\n.managerbar button{border:1px solid #fff8;background:#8b69dccc;color:#fff;border-radius:13px;padding:8px 12px;font:700 12px Vazirmatn;box-shadow:0 5px 16px #100d3355}\n@media(max-width:700px){.managerbar{top:108px;left:8px}.managerbar button{padding:6px 9px;font-size:11px}}
+.hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-size:13px;white-space:nowrap}
+#controls{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));right:max(12px,env(safe-area-inset-right));display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(2,48px);gap:5px;pointer-events:auto;direction:ltr}
+.ctrl{width:48px;height:48px;border-radius:16px;border:1px solid #fff8;background:#9d74f0aa;color:white;font-size:25px;font-weight:800;box-shadow:0 5px 20px #130c3d88;touch-action:none}
+#jump{background:#f17fc1bb;grid-column:3;grid-row:1 / span 2;width:54px;height:101px;border-radius:18px}#up{grid-column:2;grid-row:1}#left{grid-column:1;grid-row:2}#down{grid-column:2;grid-row:2}#right{grid-column:1;grid-row:1}
+#interact{position:absolute;bottom:92px;left:50%;transform:translateX(-50%);pointer-events:auto;background:#ff9bcf;color:#43224d;border:0;border-radius:99px;padding:10px 18px;font-weight:800;display:none}
+#toast{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);background:#241a51ed;border:1px solid #ffbce6;border-radius:18px;padding:16px 22px;text-align:center;max-width:85%;display:none;box-shadow:0 10px 35px #120a3d99}
+#start{position:fixed;inset:0;background:linear-gradient(#18133acc,#252052d9),radial-gradient(circle at 50% 35%,#e99bdf,#27204e);display:grid;place-items:center;z-index:5;padding:22px}
+.startcard{max-width:520px;text-align:center;background:#fff1;border:1px solid #fff5;backdrop-filter:blur(15px);border-radius:28px;padding:28px}
+.startcard h1{font-size:clamp(28px,7vw,48px);color:#ffc9ed;margin:0 0 8px}.startcard p{line-height:2;color:#f5e9ff}
+#play{background:linear-gradient(90deg,#ff8fc8,#a88cff);border:0;border-radius:15px;padding:13px 30px;color:#fff;font:800 17px Vazirmatn;cursor:pointer}
+@media(max-width:700px){
+ .top{padding:max(8px,env(safe-area-inset-top)) 8px 8px}.brand{font-size:13px;padding:7px 9px}.stats{font-size:12px;padding:7px 9px;gap:8px}
+ .quest{top:58px;left:8px;right:8px;max-width:none;font-size:11px;padding:6px 10px}
+ .hint{display:none}#controls{right:max(10px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));gap:7px}.ctrl{width:58px;height:58px;border-radius:18px;font-size:22px}
+ #interact{bottom:calc(92px + env(safe-area-inset-bottom));font-size:12px;padding:9px 13px}
+ .startcard{padding:22px 17px}
+}
+#business{position:fixed;z-index:8;inset:0;background:#120e37b8;display:none;align-items:center;justify-content:center;padding:16px}
+.bizcard{width:min(440px,100%);max-height:85vh;overflow:auto;background:linear-gradient(145deg,#fff8ff,#e8e3ff);color:#30234e;border:2px solid #fff;border-radius:24px;padding:20px;box-shadow:0 20px 60px #09051e99}
+.bizcard h2{margin:0 0 8px;color:#8155c6}.bizcard p{line-height:1.8}.bizrow{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border-radius:14px;padding:11px;margin:9px 0}
+.bizrow button,.bizactions button{border:0;border-radius:12px;padding:9px 13px;background:linear-gradient(90deg,#ff8fc8,#a88cff);color:white;font:700 13px Vazirmatn}
+.bizactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.bizactions .secondary{background:#e8ddff;color:#6549a0}
+#businessClose{float:left;background:#e8ddff;color:#6549a0;border:0;border-radius:10px;padding:5px 11px;font:700 16px Vazirmatn}
+
+@media(max-height:520px) and (orientation:landscape){.top{padding:5px}.quest{top:50px;max-width:210px;font-size:10px}.managerbar{top:95px}.ctrl{width:46px;height:46px}#controls{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px);bottom:6px}#jump{height:94px}#interact{bottom:8px;left:45%}.startcard{padding:12px 18px}.startcard p{margin:6px 0;line-height:1.5}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud">
+ <div class="top"><div class="brand">✦ ATRISA'S WORLD</div><div class="stats"><span>⭐ <b id="score">0</b></span><span>🐾 <b id="cats">0</b></span><span>🪙 <b id="coins">500</b></span><span>❄️ شهر جادویی</span></div></div>
+ <div class="quest">📜 مأموریت: شهر رو گسترش بده، چند شعبه بساز و کارمند استخدام کن!</div><div class="managerbar"><button id="manageShops">🏪 مدیریت شعبه‌ها</button><button id="manageStaff">👩‍🍳 استخدام کارمند</button></div>
+ <div class="hint">حرکت: WASD یا کلیدهای جهت‌دار · پرش: Space</div>
+ <div id="controls"><button class="ctrl" id="left">◀</button><button class="ctrl" id="up">▲</button><button class="ctrl" id="down">▼</button><button class="ctrl" id="right">▶</button><button class="ctrl" id="jump">⤒</button></div>
+ <button id="interact">تعامل ✨</button><div id="toast"></div>
+</div>
+<div id="business"><div class="bizcard"><button id="businessClose">✕</button><h2 id="bizTitle">🏪 کسب‌وکار اتریسا</h2><p id="bizDesc">مغازه‌ات رو بخر و کسب‌وکارت رو بساز!</p><div id="bizContent"></div></div></div>
+<div id="start"><div class="startcard"><h1>ATRISA'S WORLD</h1><p>به به شهر سه‌بعدی اتریسا خوش اومدی!<br>مشتری‌ها وارد کافه، رستوران و پت‌شاپ می‌شن؛ سفارش بده، انبار رو شارژ کن و کارمند استخدام کن.</p><button id="play">ورود به دنیای اتریسا ✨</button><button id="installApp" style="display:none;margin:12px auto 0;background:#fff2;border:1px solid #fff8;border-radius:13px;padding:10px 18px;color:#fff;font:700 14px Vazirmatn">📲 نصب بازی روی گوشی</button><p style="font-size:12px">با دکمه‌های روی صفحه حرکت کن؛ در مدیریت شهر می‌تونی چند شعبه بسازی و کارمند استخدام کنی.</p></div></div>
+<script>
+let deferredInstallPrompt=null;
+const installButton=document.getElementById('installApp');
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;installButton.style.display='block'});
+installButton.addEventListener('click',async()=>{if(!deferredInstallPrompt){alert('برای نصب، منوی سه‌نقطه مرورگر Chrome را باز کن و گزینه Add to Home screen یا Install app را بزن.');return;}deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;installButton.style.display='none'});
+window.addEventListener('appinstalled',()=>{installButton.style.display='none'});
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+</script>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const mount=document.querySelector('#game');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9eb8ed);scene.fog=new THREE.Fog(0x9eb8ed,25,85);
+const camera=new THREE.PerspectiveCamera(innerWidth<700?66:55,innerWidth/innerHeight,.1,180);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;mount.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe7eaff,0x65708f,2));
+const sun=new THREE.DirectionalLight(0xffe6f4,2.4);sun.position.set(-12,22,10);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;scene.add(sun);
+const mat=(c,r=.85,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+const snow=mat(0xf7f3ff),ice=mat(0xb9dcf7),pink=mat(0xff91c9),deepPink=mat(0xd85d9d),purple=mat(0x7055ad),dark=mat(0x211b35),hair=mat(0x171426,.48),skin=mat(0xffd6d0),gold=mat(0xffd56d,.35,.25),sea=mat(0x438ec4,.3,.18),wood=mat(0x765078),glass= new THREE.MeshStandardMaterial({color:0x9fe5ff,roughness:.2,metalness:.2,transparent:true,opacity:.55});
+function box(parent,x,y,z,sx,sy,sz,material){let o=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+function sphere(parent,x,y,z,sx,sy,sz,material){let o=new THREE.Mesh(new THREE.SphereGeometry(1,20,16),material);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;parent.add(o);return o}
+function cylinder(parent,x,y,z,rt,rb,h,material,n=12){let o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,n),material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+function tree(x,z){let g=new THREE.Group();g.position.set(x,0,z);cylinder(g,0,.75,0,.18,.25,1.5,wood);for(let i=0;i<3;i++){let c=new THREE.Mesh(new THREE.ConeGeometry(1.05-i*.17,1.8,8),i%2?ice:snow);c.position.y=1.65+i*.55;c.castShadow=true;g.add(c)}sphere(g,0,2.5,0,.18,.18,.18,pink);scene.add(g)}
+// island + surrounding water
+let water=new THREE.Mesh(new THREE.CylinderGeometry(52,52,1.5,96),sea);water.position.y=-1.5;water.receiveShadow=true;scene.add(water);
+let land=new THREE.Mesh(new THREE.CylinderGeometry(23,24,2.5,64),mat(0x6575a2));land.position.y=-.15;land.receiveShadow=true;land.castShadow=true;scene.add(land);
+let top=new THREE.Mesh(new THREE.CylinderGeometry(22.6,23,0.45,64),snow);top.position.y=1.15;top.receiveShadow=true;scene.add(top);
+for(let i=0;i<38;i++){let a=i/38*Math.PI*2,r=19+Math.random()*2;tree(Math.cos(a)*r,Math.sin(a)*r)}
+// path
+let path=new THREE.Mesh(new THREE.BoxGeometry(7,.12,32),mat(0xd9c9e9));path.position.set(0,1.42,1);path.receiveShadow=true;scene.add(path);
+// cafe
+let cafe=new THREE.Group();cafe.position.set(-8,1.4,-5);box(cafe,0,1.7,0,5,3.4,4,mat(0x9c6f9e));let roof=new THREE.Mesh(new THREE.ConeGeometry(3.8,2,4),pink);roof.position.y=4.3;roof.rotation.y=Math.PI/4;roof.castShadow=true;cafe.add(roof);box(cafe,0,2,2.04,2.4,1.5,.12,glass);box(cafe,0,3.5,2.1,3.6,.55,.18,deepPink);scene.add(cafe);
+function sign(x,z,label){let g=new THREE.Group();g.position.set(x,1.5,z);cylinder(g,0,.65,0,.09,.12,1.3,wood);box(g,0,1.35,0,2.8,.65,.2,purple);let cv=document.createElement('canvas');cv.width=512;cv.height=128;let ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.font='bold 48px sans-serif';ctx.textAlign='center';ctx.fillText(label,256,82);let tex=new THREE.CanvasTexture(cv);let m=new THREE.Mesh(new THREE.PlaneGeometry(2.55,.55),new THREE.MeshBasicMaterial({map:tex,transparent:true}));m.position.set(0,1.35,.115);g.add(m);scene.add(g)}
+sign(5,-7,'CAT GARDEN');sign(7,2,'SEA WORLD');sign(-8,1,'HOT CHOCOLATE');
+sign(8,9,'LASAGNA HOUSE');sign(-8,10,'SNOW GARDEN');
+// Lasagna house: warm little restaurant with a layered lasagna sign
+const lasagnaHouse=new THREE.Group();lasagnaHouse.position.set(8,1.4,12);
+box(lasagnaHouse,0,1.45,0,4.8,2.9,3.8,mat(0xd68a78));
+let lhRoof=new THREE.Mesh(new THREE.ConeGeometry(3.6,1.8,4),mat(0x9b557e));lhRoof.position.y=3.75;lhRoof.rotation.y=Math.PI/4;lasagnaHouse.add(lhRoof);
+box(lasagnaHouse,0,1.8,1.95,2.2,1.3,.12,glass);
+sphere(lasagnaHouse,0,3.05,2.05,.48,.35,.12,gold);
+scene.add(lasagnaHouse);
+// Snow garden with snow-person and icy arch
+const snowGarden=new THREE.Group();snowGarden.position.set(-8,1.4,13);
+sphere(snowGarden,0,.55,0,.55,.55,.55,snow);sphere(snowGarden,0,1.35,0,.38,.38,.38,snow);
+sphere(snowGarden,-.13,1.42,.34,.045,.05,.035,dark);sphere(snowGarden,.13,1.42,.34,.045,.05,.035,dark);
+cylinder(snowGarden,0,1.02,.42,.045,.045,.65,wood);scene.add(snowGarden);
+// Cat garden: little paw-print stepping stones and extra fluffy cats
+for(let i=0;i<5;i++){let x=5+i*.55,z=-10-i*.35;sphere(scene,x,1.42,z,.36,.12,.42,mat(0xe9d9f5));}
+function makeCat(x,z,fur){let g=new THREE.Group();g.position.set(x,1.4,z);sphere(g,0,.32,0,.42,.3,.5,fur);sphere(g,0,.68,.04,.31,.3,.3,fur);for(let s of [-1,1]){let e=new THREE.Mesh(new THREE.ConeGeometry(.12,.27,8),fur);e.position.set(s*.2,.94,.02);g.add(e);sphere(g,s*.11,.69,.32,.035,.04,.025,dark)}scene.add(g)}
+makeCat(6,-8,snow);makeCat(8,-8,mat(0xd9b8a7));
+// distant castle
+let castle=new THREE.Group();castle.position.set(8,1.4,-17);box(castle,0,2,0,7,4,5,mat(0xaaa3df));for(let x of [-3,3])for(let z of [-2,2]){cylinder(castle,x,4.7,z,.7,.9,2.2,pink,8);let con=new THREE.Mesh(new THREE.ConeGeometry(.85,2,8),purple);con.position.set(x,6.8,z);castle.add(con)}box(castle,0,1.5,2.55,1.4,2.8,.3,wood);scene.add(castle);
+// decorative moon
+sphere(scene,-14,17,-25,3.4,3.4,.5,mat(0xffe5d2,.3)); 
+// Atrisa: custom stylized 3D anime character (procedural mesh model)
+const player=new THREE.Group();scene.add(player);player.position.set(0,1.4,8);
+const body=new THREE.Group();player.add(body);
+
+// Back hair: long flowing shape down to the waist
+sphere(body,0,1.78,-.27,.57,.91,.34,hair);
+sphere(body,-.43,1.53,-.13,.17,.86,.19,hair);
+sphere(body,.43,1.53,-.13,.17,.86,.19,hair);
+for(let k=0;k<5;k++){
+  let lock=sphere(body,-.42+k*.21,1.45,-.43,.085,.72,.095,hair);
+  lock.rotation.z=(k-2)*-.035;
+}
+// Hoodie torso with soft shoulder silhouette
+sphere(body,0,1.03,0,.53,.67,.37,dark);
+sphere(body,0,1.27,.025,.57,.32,.37,dark);
+sphere(body,0,.88,.31,.22,.34,.055,mat(0x342b48));
+box(body,0,1.16,.365,.035,.38,.025,mat(0x887b9b));
+// Hood behind head
+sphere(body,0,1.72,-.25,.48,.48,.23,mat(0x30283e));
+// Neck and anime face
+cylinder(body,0,1.62,.06,.16,.17,.28,skin,16);
+sphere(body,0,2.12,.08,.48,.55,.42,skin);
+// Hair cap and layered bangs
+sphere(body,0,2.42,-.04,.53,.43,.47,hair);
+for(let k=0;k<7;k++){
+  const x=-.42+k*.14;
+  const bang=sphere(body,x,2.27,.405,.115,.29,.105,hair);
+  bang.rotation.z=(k-3)*-.16;
+}
+sphere(body,-.45,2.04,-.015,.13,.46,.18,hair);
+sphere(body,.45,2.04,-.015,.13,.46,.18,hair);
+// Eyes, irises, highlights, brows and subtle mouth
+for(const x of [-.19,.19]){
+  sphere(body,x,2.12,.465,.105,.125,.035,mat(0x2b1c30));
+  sphere(body,x,2.105,.496,.063,.085,.02,mat(0x8b527d));
+  sphere(body,x-.018,2.14,.515,.022,.03,.012,mat(0xffffff));
+  sphere(body,x,2.27,.45,.105,.025,.025,hair);
+}
+sphere(body,0,1.96,.49,.045,.025,.025,skin);
+sphere(body,0,1.88,.485,.075,.018,.018,deepPink);
+// Hair bow and hoodie bow detail
+sphere(body,-.42,2.63,.10,.22,.13,.10,pink);
+sphere(body,-.20,2.63,.10,.22,.13,.10,pink);
+sphere(body,-.31,2.63,.18,.075,.075,.06,gold);
+sphere(body,.29,1.38,.36,.12,.09,.035,pink);
+sphere(body,.43,1.38,.36,.12,.09,.035,pink);
+sphere(body,.36,1.38,.40,.05,.06,.025,gold);
+
+// Sleeves and arms on pivots so they swing naturally while walking
+const armL=new THREE.Group();armL.position.set(-.52,1.34,0);body.add(armL);
+sphere(armL,0,-.27,0,.19,.43,.2,dark);
+sphere(armL,0,-.57,.045,.15,.13,.16,skin);
+const armR=new THREE.Group();armR.position.set(.52,1.34,0);body.add(armR);
+sphere(armR,0,-.27,0,.19,.43,.2,dark);
+sphere(armR,0,-.57,.045,.15,.13,.16,skin);
+
+// Pleated pink-and-black skirt
+cylinder(body,0,.54,0,.58,.43,.34,deepPink,16);
+for(let k=0;k<12;k++){
+  const a=k/12*Math.PI*2;
+  const pleat=box(body,Math.sin(a)*.46,.48,Math.cos(a)*.36,.11,.34,.09,k%2?pink:dark);
+  pleat.rotation.y=a;
+}
+// Separate legs and chunky black boots
+const legL= new THREE.Group();legL.position.set(-.2,.38,0);body.add(legL);
+box(legL,0,-.22,0,.19,.48,.2,skin);
+sphere(legL,0,-.48,.09,.17,.22,.28,dark);
+sphere(legL,0,-.61,.16,.22,.10,.34,purple);
+const legR= new THREE.Group();legR.position.set(.2,.38,0);body.add(legR);
+box(legR,0,-.22,0,.19,.48,.2,skin);
+sphere(legR,0,-.48,.09,.17,.22,.28,dark);
+sphere(legR,0,-.61,.16,.22,.10,.34,purple);
+// Pink bows on the boots
+for(const x of [-.2,.2]){
+  sphere(body,x-.08,-.20,.31,.09,.055,.035,pink);
+  sphere(body,x+.08,-.20,.31,.09,.055,.035,pink);
+  sphere(body,x,-.20,.34,.04,.045,.025,gold);
+}
+// Small cat-themed shoulder bag
+sphere(body,.61,1.02,.17,.19,.22,.12,mat(0xf4d9ed));
+sphere(body,.56,1.22,.19,.13,.12,.1,mat(0xf4d9ed));
+for(const x of [.49,.63]){
+  const ear=new THREE.Mesh(new THREE.ConeGeometry(.055,.12,8),mat(0xf4d9ed));
+  ear.position.set(x,1.32,.18);body.add(ear);
+}
+sphere(body,.57,1.04,.29,.025,.03,.015,dark);
+sphere(body,.65,1.04,.29,.025,.03,.015,dark);
+
+// Animation pivots remain compatible with the movement loop
+// cat companion
+const cat=new THREE.Group();cat.position.set(1,0,1);player.add(cat);sphere(cat,0,.38,0,.38,.32,.48,snow);sphere(cat,0,.72,.05,.29,.29,.28,snow);for(let s of [-1,1]){let ear=new THREE.Mesh(new THREE.ConeGeometry(.12,.28,8),snow);ear.position.set(s*.2,.98,.04);cat.add(ear);sphere(cat,s*.1,.73,.3,.035,.04,.025,dark)}sphere(cat,0,.62,.32,.06,.035,.02,pink);
+// stars
+const stars=[];for(let i=0;i<14;i++){let g=new THREE.Group();let core=new THREE.Mesh(new THREE.OctahedronGeometry(.38),gold);core.castShadow=true;g.add(core);let a=Math.random()*Math.PI*2,r=5+Math.random()*13;g.position.set(Math.cos(a)*r,2+Math.random()*2,Math.sin(a)*r-1);scene.add(g);stars.push(g)}
+// snow particles
+const snowGeo=new THREE.BufferGeometry(),pts=[];for(let i=0;i<500;i++)pts.push((Math.random()-.5)*55,Math.random()*28-1,(Math.random()-.5)*55);snowGeo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));const flakes=new THREE.Points(snowGeo,new THREE.PointsMaterial({color:0xffffff,size:.12,transparent:true,opacity:.85}));scene.add(flakes);
+const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space')jump()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+let score=0,cats=0,vy=0,onGround=true,near=false;
+function bind(id,key){let el=document.getElementById(id);el.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>keys[key]=false))}
+bind('left','arrowleft');bind('right','arrowright');bind('up','arrowup');bind('down','arrowdown');document.getElementById('jump').addEventListener('pointerdown',jump);
+function jump(){if(onGround){vy=.22;onGround=false}}
+function say(t){let el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(window.tt);window.tt=setTimeout(()=>el.style.display='none',2600)}
+const interact=document.getElementById('interact');
+document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';say('شهر اتریسا منتظرته! شعبه بساز و تیم خودت رو تشکیل بده ✨')};
+const business=document.getElementById('business');
+document.getElementById('businessClose').onclick=()=>business.style.display='none';
+
+// 3D business layer: storefronts, checkout counters, staff and walking customers
+const storeObjects=[], staffActors=[], customerActors=[];
+const storeColors={cafe:0xb96eaa,lasagna:0xd87962,pet:0x6e83c9};
+function makeHumanoid(x,z,uniform=mat(0x8b6bc1),isStaff=false){
+ const g=new THREE.Group();g.position.set(x,1.4,z);
+ sphere(g,0,.83,0,.25,.34,.19,uniform);
+ sphere(g,0,1.35,.015,.22,.25,.21,skin);
+ sphere(g,0,1.49,-.045,.23,.12,.22,hair);
+ sphere(g,-.075,1.36,.205,.025,.035,.018,dark);sphere(g,.075,1.36,.205,.025,.035,.018,dark);
+ let bag=null;
+ if(isStaff){box(g,0,.9,.205,.28,.36,.035,mat(0xffb4d9));sphere(g,0,.65,.22,.07,.06,.04,gold)}
+ else {bag=box(g,.30,.68,.12,.20,.23,.12,mat(0xf5c4df));bag.visible=false}
+ const leg1=box(g,-.09,.32,0,.09,.35,.1,dark),leg2=box(g,.09,.32,0,.09,.35,.1,dark);
+ scene.add(g);return {group:g,leg1,leg2,bag,phase:Math.random()*6.28,origin:new THREE.Vector3(x,1.4,z),target:new THREE.Vector3(x,1.4,z),isStaff};
+}
+function addCheckout(parent){
+ const counter=box(parent,0,1.02,1.15,2.2,.85,.65,wood);
+ box(parent,.35,1.5,1.1,.48,.12,.38,mat(0x30283e));
+ const screen=box(parent,.35,1.63,1.1,.36,.2,.035,mat(0x78e3d3));
+ box(parent,-.55,1.47,1.12,.25,.08,.22,gold);
+ return counter;
+}
+function createStore(type,x,z,id,existing=false){
+ const g=new THREE.Group();g.position.set(x,1.4,z);
+ const wall=mat(storeColors[type]||0x8d73bd), roofMat=type==='cafe'?pink:type==='lasagna'?mat(0xc95f58):mat(0x6d75c9);
+ box(g,0,1.45,0,5.4,2.9,4.3,wall);
+ box(g,1.1,1.55,2.18,2.1,1.55,.12,glass);
+ box(g,-1.25,1.55,2.18,1.7,1.55,.12,glass);
+ box(g,0,3.08,2.24,5.6,.42,.22,roofMat);
+ const awning=box(g,0,2.82,2.42,5.4,.32,.7,roofMat);awning.rotation.x=-.12;
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(4,1.5,4),roofMat);roof.position.set(0,3.9,0);roof.rotation.y=Math.PI/4;roof.castShadow=true;g.add(roof);
+ // Lit shop sign with type label
+ const labels={cafe:'HOT CHOCOLATE',lasagna:'LASAGNA',pet:'PET SHOP'};
+ const cv=document.createElement('canvas');cv.width=512;cv.height=128;
+ const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.font='bold 48px sans-serif';ctx.textAlign='center';ctx.fillText(labels[type]||'ATRISA SHOP',256,82);
+ const tex=new THREE.CanvasTexture(cv);const signMesh=new THREE.Mesh(new THREE.PlaneGeometry(4.4,.65),new THREE.MeshBasicMaterial({map:tex,transparent:true}));
+ signMesh.position.set(0,3.1,2.58);g.add(signMesh);
+ addCheckout(g);
+ // Store-specific stocked shelves visible through the shop windows
+ const shelfMat=mat(0x684a76),productMats=[mat(0xf4c56d),mat(0xe98bbd),mat(0x8ac9b9),mat(0xb6a1ee)];
+ for(let row=0;row<2;row++){
+  box(g,-1.75,.72+row*.78,-.55,1.15,.12,1.05,shelfMat);
+  for(let k=0;k<4;k++){
+   const item=box(g,-2.15+k*.27, .94+row*.78,-.62,.18,.28,.2,productMats[(k+row)%productMats.length]);
+   item.userData.stockDisplay=true;
+  }
+ }
+ const display=box(g,1.55,.82,-.7,.9,.95,.75,mat(0x9b82bd));
+ display.userData.stockDisplay=true;
+ scene.add(g);storeObjects.push(g);
+ // one staff member is visible behind the counter when hired
+ return g;
+}
+function addStaffActor(branch){
+ const a=makeHumanoid(branch.x,branch.z+1.15,mat(0x8b6bc1),true);
+ a.group.position.x=branch.x+(Math.random()-.5)*1.5;
+ a.group.position.z=branch.z+1.2;
+ staffActors.push(a);
+}
+function addCustomerActor(){
+ const x=(Math.random()-.5)*20,z=(Math.random()-.5)*25;
+ const a=makeHumanoid(x,z,mat([0x8e91c9,0xb77891,0x719eaa,0x9877a9][Math.floor(Math.random()*4)]),false);
+ a.target.set((Math.random()-.5)*17,1.4,(Math.random()-.5)*20);
+ customerActors.push(a);
+}
+function animateCrowd(dt,t){
+ for(const a of customerActors){
+  const dx=a.target.x-a.group.position.x,dz=a.target.z-a.group.position.z,dist=Math.hypot(dx,dz);
+  if(dist<.65){
+   const b=a.shopBranchId?branches.find(x=>x.id===a.shopBranchId):null;
+   if(b && a.customerState==='walkingToShop'){
+    a.customerState='choosingProduct';a.chosenProduct=productCatalog[b.type][Math.floor(Math.random()*productCatalog[b.type].length)];a.target.set(b.x-1.6,1.4,b.z+.5);
+   }else if(b && a.customerState==='choosingProduct'){
+    if(a.bag)a.bag.visible=true;a.customerState='walkingToCheckout';a.target.set(b.x+.2,1.4,b.z+4.8);
+   }else if(b && a.customerState==='walkingToCheckout'){
+    a.customerState='atCheckout';b.waiting++;updateBusinessStats();
+    if(b.workers>0){serveCustomer(b,a);say(`🧾 کارمند صندوق سفارش «${a.chosenProduct?.name||productInfo[b.type].product}» رو ثبت کرد.`)}
+   }else if(!a.shopBranchId){
+    a.target.set((Math.random()-.5)*18,1.4,(Math.random()-.5)*21);
+   }
+  }else{
+   const len=Math.max(.001,dist);a.group.position.x+=dx/len*dt*.8;a.group.position.z+=dz/len*dt*.8;
+   a.group.rotation.y=Math.atan2(dx,dz);a.leg1.rotation.x=Math.sin(t*7+a.phase)*.35;a.leg2.rotation.x=-a.leg1.rotation.x;
+  }
+ }
+ for(const a of staffActors){a.group.position.y=1.4+Math.sin(t*2+a.phase)*.025}
+ animateDeliveries(dt);
+}
+for(let i=0;i<9;i++)addCustomerActor();
+// initial storefronts align with the existing themed districts
+createStore('cafe',-8,-5,1,true);
+createStore('lasagna',8,12,2,true);
+createStore('pet',6,-8,3,true);
+
+let coins=500, branchSeq=4, pendingIncome=0;
+const shopInfo={
+ cafe:{name:'☕ کافه هات‌چاکلت',cost:280,desc:'کافه‌ای دنج برای فروش هات‌چاکلت و شیرینی.',income:35},
+ lasagna:{name:'🍝 لازانیا‌فروشی',cost:360,desc:'رستوران لازانیا با فر، میز و مشتری‌های گرسنه.',income:55},
+ pet:{name:'🐾 پت‌شاپ',cost:420,desc:'فروش غذا، اسباب‌بازی و وسایل مراقبت از حیوانات.',income:48}
+};
+const branches=[
+ {id:1,type:'cafe',workers:0,name:'کافه هات‌چاکلت مرکزی',x:-8,z:-5,stock:12,waiting:0,sales:0,revenue:0,level:1,orders:0},
+ {id:2,type:'lasagna',workers:0,name:'لازانیا‌فروشی مرکزی',x:8,z:12,stock:12,waiting:0,sales:0,revenue:0,level:1,orders:0},
+ {id:3,type:'pet',workers:0,name:'پت‌شاپ مرکزی',x:6,z:-8,stock:12,waiting:0,sales:0,revenue:0,level:1,orders:0}
+];
+function refreshCoins(){document.getElementById('coins').textContent=coins}
+function totalWorkers(){return branches.reduce((n,b)=>n+b.workers,0)}
+function branchIncome(b){return shopInfo[b.type].income+b.workers*20}
+
+
+// Delivery vans bring replenishment orders to each individual branch.
+const deliveryTrucks=[];
+function createDeliveryTruck(branch){
+ const van=new THREE.Group();
+ const bodyMat=mat(0xf4b4dc);
+ box(van,0,.65,0,2.1,.9,1.05,bodyMat);
+ box(van,.52,1.18,0,.95,.48,1.02,glass);
+ for(const x of [-.65,.65])for(const z of [-.48,.48]){
+  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.14,12),dark);
+  wheel.rotation.z=Math.PI/2;wheel.position.set(x,.28,z);van.add(wheel);
+ }
+ const start=new THREE.Vector3(branch.x+14,1.4,branch.z+8);
+ van.position.copy(start);scene.add(van);
+ deliveryTrucks.push({group:van,branch,start,target:new THREE.Vector3(branch.x+3,1.4,branch.z+4),progress:0});
+}
+function animateDeliveries(dt){
+ for(let i=deliveryTrucks.length-1;i>=0;i--){
+  const d=deliveryTrucks[i];d.progress+=dt*.16;
+  d.group.position.lerpVectors(d.start,d.target,Math.min(1,d.progress));
+  if(d.progress>=1){
+   d.branch.stock+=10;d.branch.orders++;
+   say(`🚚 محموله رسید! ۱۰ کالا به ${d.branch.name} اضافه شد.`);
+   scene.remove(d.group);deliveryTrucks.splice(i,1);refreshCoins();
+  }
+ }
+}
+function upgradeBranch(id){
+ const b=branches.find(x=>x.id===id);if(!b)return;
+ const cost=180*b.level;
+ if(coins<cost){say(`برای ارتقا به ${cost} سکه نیاز داری.`);return}
+ coins-=cost;b.level++;b.stock+=5;
+ const building=storeObjects[b.id-1];
+ if(building){building.scale.setScalar(1+(b.level-1)*.035)}
+ refreshCoins();say(`${b.name} به سطح ${b.level} ارتقا پیدا کرد!`);openBusiness(b.type);
+}
+window.upgradeBranch=upgradeBranch;
+const productInfo={
+ cafe:{product:'هات‌چاکلت',price:18,restock:50,emoji:'☕'},
+ lasagna:{product:'لازانیا',price:32,restock:70,emoji:'🍝'},
+ pet:{product:'غذای گربه و اسباب‌بازی',price:24,restock:60,emoji:'🐾'}
+};
+const productCatalog={
+ cafe:[{name:'هات‌چاکلت کلاسیک',price:18},{name:'هات‌چاکلت مارشمالو',price:24},{name:'کوکی شکلاتی',price:12}],
+ lasagna:[{name:'لازانیا مخصوص',price:32},{name:'لازانیا سبزیجات',price:28},{name:'نوشیدنی',price:10}],
+ pet:[{name:'غذای گربه',price:24},{name:'اسباب‌بازی گربه',price:16},{name:'ظرف آب و غذا',price:20}]
+};
+let customerSpawnTimer=0;
+function branchProduct(b){return productInfo[b.type]}
+function updateBusinessStats(){
+ const el=document.getElementById('bizStats');
+ if(el)el.textContent=`مشتری‌های منتظر: ${branches.reduce((n,b)=>n+b.waiting,0)} · فروش کل: ${branches.reduce((n,b)=>n+b.sales,0)}`;
+}
+function spawnShopCustomer(branch){
+ const actor=addCustomerActor();
+ actor.shopBranchId=branch.id;
+ actor.customerState='walkingToShop';
+ actor.target.set(branch.x+(Math.random()-.5)*1.4,1.4,branch.z+4.1);
+ actor.group.userData.branchId=branch.id;
+}
+function serveCustomer(branch,actor=null){
+ if(branch.waiting<=0){say('فعلاً مشتری منتظر این شعبه نیست.');return false}
+ if(branch.stock<=0){say('موجودی انبار تموم شده؛ اول کالا سفارش بده!');return false}
+ branch.waiting--;
+ branch.stock--;
+ branch.sales++;
+ const sale=actor?.chosenProduct?.price||branchProduct(branch).price;
+ branch.revenue+=sale;
+ pendingIncome+=sale;
+ if(actor){actor.customerState='leavingShop';actor.target.set((Math.random()-.5)*18,1.4,(Math.random()-.5)*20);actor.shopBranchId=null}
+ updateBusinessStats();
+ return true;
+}
+function runShopSimulation(){
+ for(const b of branches){
+  const active=customerActors.filter(a=>a.shopBranchId===b.id&&a.customerState!=='leavingShop').length;
+  if(active<4 && Math.random()<.82)spawnShopCustomer(b);
+ }
+}
+function restockBranch(id){
+ const b=branches.find(x=>x.id===id);if(!b)return;
+ const cost=productInfo[b.type].restock;
+ if(coins<cost){say(`برای سفارش موجودی به ${cost} سکه نیاز داری.`);return}
+ coins-=cost;refreshCoins();say('🚚 سفارش ثبت شد؛ کامیون در راه شعبه است!');createDeliveryTruck(b);openBusiness(b.type);
+}
+function manualServe(id){
+ const b=branches.find(x=>x.id===id);if(!b)return;
+ const actor=customerActors.find(a=>a.shopBranchId===id&&a.customerState==='atCheckout');
+ if(serveCustomer(b,actor||null)){say(`🧾 سفارش مشتری پرداخت شد؛ ${actor?.chosenProduct?.name||productInfo[b.type].product} فروخته شد!`);refreshCoins();openBusiness(b.type)}
+}
+window.restockBranch=restockBranch;window.manualServe=manualServe;
+
+setInterval(runShopSimulation,12000);
+function showPanel(title,desc,content){document.getElementById('bizTitle').textContent=title;document.getElementById('bizDesc').textContent=desc;document.getElementById('bizContent').innerHTML=content;business.style.display='flex'}
+function dashboard(){
+ let rows=branches.map(b=>`<div class="bizrow" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px"><b>${shopInfo[b.type].name} #${b.id}</b><strong>🪙 ${b.revenue} درآمد</strong></div><div style="font-size:12px;margin:7px 0">👩‍🍳 ${b.workers} کارمند · 📦 موجودی: ${b.stock} · 🧍 صف: ${b.waiting} · 🛍️ فروش: ${b.sales} · ⭐ سطح ${b.level} · 🚚 ${b.orders} تحویل</div><div class="bizactions"><button onclick="hireWorker(${b.id})">استخدام · ۱۰۰</button><button onclick="restockBranch(${b.id})">سفارش موجودی</button><button class="secondary" onclick="manualServe(${b.id})">صندوق‌داری دستی</button><button class="secondary" onclick="renameBranch(${b.id})">تغییر نام</button></div></div>`).join('');
+ let content=`<div class="bizrow"><b>تعداد شعبه‌ها</b><strong>${branches.length}</strong></div><div class="bizrow"><b>کل کارکنان</b><strong>${totalWorkers()} نفر</strong></div><div class="bizrow"><b>درآمد آماده دریافت</b><strong>🪙 ${pendingIncome}</strong></div>${rows}<div class="bizactions"><button onclick="collectAll()">دریافت درآمد همه شعبه‌ها</button><button class="secondary" onclick="openBuildMenu()">ساخت شعبه جدید</button></div>`;
+ showPanel('🏢 مدیریت کسب‌وکارهای اتریسا','همه شعبه‌ها، کارکنان، انبار و صف مشتری‌ها رو مدیریت کن.',`<div id="bizStats" class="bizrow">مشتری‌ها و فروش در حال به‌روزرسانی...</div>`+content);updateBusinessStats();
+}
+function openBuildMenu(){
+ let content=Object.entries(shopInfo).map(([key,s])=>`<div class="bizrow"><div><b>${s.name}</b><div style="font-size:12px">درآمد پایه: ${s.income} سکه در هر دوره</div></div><button onclick="buyBranch('${key}')">ساخت · 🪙 ${s.cost+Math.max(0,branches.filter(b=>b.type===key).length-1)*100}</button></div>`).join('');
+ showPanel('🛠️ ساخت شعبه جدید','می‌تونی از هر نوع مغازه چند شعبه داشته باشی؛ هر شعبه جداگانه کارمند و درآمد خودش رو داره.',content);
+}
+function buyBranch(type){
+ const s=shopInfo[type],count=branches.filter(b=>b.type===type).length,cost=s.cost+Math.max(0,count-1)*100;
+ if(coins<cost){say('سکه کافی نداری؛ از درآمد شعبه‌ها و مأموریت‌ها استفاده کن.');return}
+ coins-=cost;const id=branchSeq++;
+ const angle=(id*2.399),radius=13.5+(id%3)*2.2,x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
+ const branch={id,type,workers:0,name:s.name+' شعبه '+(count+1),x,z,stock:12,waiting:0,sales:0,revenue:0,level:1,orders:0};branches.push(branch);
+ createStore(type,x,z,id);refreshCoins();say('ساختمان سه‌بعدی شعبه جدید ساخته شد! 🎉');dashboard();
+}
+function hireWorker(id){
+ const b=branches.find(x=>x.id===id);if(!b)return;
+ if(coins<100){say('برای استخدام به ۱۰۰ سکه نیاز داری.');return}
+ coins-=100;b.workers++;addStaffActor(b);refreshCoins();say('کارمند جدید استخدام شد و داخل شعبه مشغول کار شد! 👩‍🍳');dashboard();
+}
+function renameBranch(id){
+ const b=branches.find(x=>x.id===id);if(!b)return;
+ const name=prompt('اسم جدید شعبه رو بنویس:',b.name);if(name&&name.trim()){b.name=name.trim().slice(0,28);dashboard()}
+}
+function collectAll(){
+ if(pendingIncome<=0){say('هنوز درآمدی جمع نشده؛ کمی زمان بده تا شعبه‌ها کار کنن.');return}
+ coins+=pendingIncome;say('درآمد همه شعبه‌ها دریافت شد! 🪙');pendingIncome=0;refreshCoins();dashboard();
+}
+window.hireWorker=hireWorker;window.renameBranch=renameBranch;window.buyBranch=buyBranch;
+window.collectAll=collectAll;window.openBuildMenu=openBuildMenu;
+function openBusiness(type){
+ const s=shopInfo[type],list=branches.filter(b=>b.type===type);
+ if(!list.length){showPanel(s.name,s.desc,`<div class="bizrow"><b>قیمت اولین شعبه</b><strong>🪙 ${s.cost}</strong></div><div class="bizactions"><button onclick="buyBranch('${type}')">خرید و افتتاح</button></div>`);return}
+ const rows=list.map(b=>`<div class="bizrow" style="display:block"><b>${b.name}</b><div style="font-size:12px;line-height:1.9;margin:6px 0">👩‍🍳 کارکنان: ${b.workers} · 📦 ${b.stock} عدد ${productInfo[type].product}<br>🧍 مشتری منتظر: ${b.waiting} · 🛍️ فروش انجام‌شده: ${b.sales}<br>💰 درآمد این شعبه: ${b.revenue} سکه<br>⭐ سطح فروشگاه: ${b.level} · 🚚 سفارش‌های تحویل‌شده: ${b.orders}</div><div class="bizactions"><button onclick="hireWorker(${b.id})">استخدام · ۱۰۰ سکه</button><button onclick="restockBranch(${b.id})">سفارش ۱۰ کالا · ${productInfo[type].restock} سکه</button><button onclick="upgradeBranch(${b.id})">ارتقای فروشگاه · ${180*b.level} سکه</button><button class="secondary" onclick="manualServe(${b.id})">ثبت سفارش صندوق</button></div></div>`).join('');
+ showPanel(s.name,s.desc+' مشتری‌ها از قفسه کالا انتخاب می‌کنن، به صندوق می‌رن و بعد از پرداخت خارج می‌شن.',rows+`<div class="bizactions"><button onclick="buyBranch('${type}')">خرید شعبه دیگر · 🪙 ${s.cost+Math.max(0,list.length-1)*100}</button><button class="secondary" onclick="dashboard()">مدیریت همه شعبه‌ها</button></div>`);
+}
+document.getElementById('manageShops').onclick=dashboard;
+document.getElementById('manageStaff').onclick=()=>showPanel('👩‍🍳 استخدام و مدیریت کارکنان','برای هر شعبه کارمند جداگانه استخدام کن؛ کارکنان درآمد هر دوره را بیشتر می‌کنند.',branches.map(b=>`<div class="bizrow"><b>${b.name}</b><span>${b.workers} کارمند</span><button onclick="hireWorker(${b.id})">+ استخدام · ۱۰۰</button></div>`).join(''));
+// Sales, not passive timers, now generate the money collected from the business group.
+const clock=new THREE.Clock();
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04);let move=0,turn=0;if(keys['arrowleft']||keys['a'])move=-1;if(keys['arrowright']||keys['d'])move=1;if(keys['arrowup']||keys['w'])turn=-1;if(keys['arrowdown']||keys['s'])turn=1;const speed=(keys['shift']?10:7);
+player.position.x+=move*dt*speed;player.position.z+=turn*dt*speed;player.position.x=THREE.MathUtils.clamp(player.position.x,-19,19);player.position.z=THREE.MathUtils.clamp(player.position.z,-19,19);
+if(move||turn){player.rotation.y=Math.atan2(move,turn||1);let t=clock.elapsedTime*12;legL.rotation.x=Math.sin(t)*.55;legR.rotation.x=-Math.sin(t)*.55;armL.rotation.x=-Math.sin(t)*.3;armR.rotation.x=Math.sin(t)*.3;body.position.y=Math.abs(Math.sin(t))*.07}else{legL.rotation.x=legR.rotation.x=0;armL.rotation.x=armR.rotation.x=0;body.position.y=0}
+vy-=dt*.65;player.position.y+=vy;if(player.position.y<1.4){player.position.y=1.4;vy=0;onGround=true}
+cat.position.x=1+Math.sin(clock.elapsedTime*3)*.12;cat.position.z=.9+Math.cos(clock.elapsedTime*3)*.12;
+camera.position.lerp(new THREE.Vector3(player.position.x,player.position.y+(innerWidth<700?9:7),player.position.z+(innerWidth<700?16:12)),.07);camera.lookAt(player.position.x,player.position.y+1.2,player.position.z-3);
+stars.forEach((s,i)=>{s.rotation.y+=dt*1.8;s.rotation.x+=dt; s.position.y+=Math.sin(clock.elapsedTime*2+i)*.001; if(s.visible&&s.position.distanceTo(player.position)<1.35){s.visible=false;score+=10;document.getElementById('score').textContent=score;say('۱۰ ستاره جمع کردی! ⭐')}})
+flakes.rotation.y+=dt*.015;animateCrowd(dt,clock.elapsedTime);const spots=[
+{key:'cafe',name:'کافه هات‌چاکلت ☕',pos:new THREE.Vector3(-8,1.4,-5)},
+{key:'snow',name:'باغ برفی ❄️',pos:new THREE.Vector3(-8,1.4,13)},
+{key:'sea',name:'دنیای دریا 🌊',pos:new THREE.Vector3(7,1.4,2)},
+{key:'lasagna',name:'لازانیا‌فروشی 🍝',pos:new THREE.Vector3(8,1.4,12)},
+{key:'pet',name:'پت‌شاپ 🐾',pos:new THREE.Vector3(6,1.4,-8)}
+];
+let activeSpot=spots.find(s=>player.position.distanceTo(s.pos)<5);
+interact.style.display=activeSpot?'block':'none';
+interact.textContent=activeSpot?`ورود به ${activeSpot.name}`:'تعامل ✨';
+interact.onclick=()=>{if(!activeSpot)return;
+ if(['cafe','lasagna','pet'].includes(activeSpot.key)){openBusiness(activeSpot.key);return}
+ if(activeSpot.key==='snow'){say('❄️ دونه‌های برف جادویی پیدا کردی! ۲۰ سکه جایزه گرفتی.');coins+=20;refreshCoins()}
+ if(activeSpot.key==='sea'){say('🌊 یک صدف مرواریدی پیدا کردی! ۱۵ سکه جایزه گرفتی.');coins+=15;refreshCoins()}
+ score+=5;document.getElementById('score').textContent=score;
+};
+renderer.render(scene,camera)}
+animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<700?66:55;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
